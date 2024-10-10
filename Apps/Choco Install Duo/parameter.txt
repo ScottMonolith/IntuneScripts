@@ -1,0 +1,1 @@
+/IKEY:<20charikey> /SKEY:<66charskey> /HOST:<host>.duosecurity.com /AUTOPUSH:#1 /FAILOPEN:#1 /RDPONLY:#0 /SMARTCARD:#1

@@ -1,0 +1,1 @@
+msiexec.exe /i "%~dp0DuoWindowsLogon64.msi" IKEY="<ikey>" SKEY="<skey>" HOST="<host>.duosecurity.com" AUTOPUSH="#1" FAILOPEN="#1" SMARTCARD="#1" RDPONLY="#0" /l*v! %ProgramData%\Microsoft\IntuneManagementExtension\Logs\DuoIntuneInstall.log /qn

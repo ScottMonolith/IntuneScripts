@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AnyConnectPreferences>
+	<DefaultUser/>
+	<DefaultSecondUser/>
+	<ClientCertificateThumbprint/>
+	<MultipleClientCertificateThumbprints/>
+	<ServerCertificateThumbprint/>
+	<DefaultHostName>anyconnecthostname</DefaultHostName>
+	<DefaultHostAddress/>
+	<DefaultGroup/>
+	<ProxyHost/>
+	<ProxyPort/>
+	<SDITokenType>none</SDITokenType>
+	<ControllablePreferences/>
+</AnyConnectPreferences>
