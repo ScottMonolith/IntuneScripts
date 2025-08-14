@@ -1,8 +1,10 @@
-$Uptime= get-computerinfo | Select-Object OSUptime 
-if ($Uptime.OsUptime.Days -ge 5){
-    Write-Output "Uptime $($Uptime.OsUptime.Days) days, NAG"
+$OS = Get-CimInstance Win32_OperatingSystem
+$Uptime = (Get-Date) - ($OS.LastBootUpTime)
+
+if ($Uptime.Days -ge 10){
+    Write-Output "Uptime $($Uptime.Days) days, NAG"
     Exit 1
 }else {
-    Write-Output "Uptime $($Uptime.OsUptime.Days) days, no nag"
+    Write-Output "Uptime $($Uptime.Days) days, no nag"
     Exit 0
 }

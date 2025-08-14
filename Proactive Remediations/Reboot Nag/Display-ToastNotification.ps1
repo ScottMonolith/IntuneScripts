@@ -250,7 +250,7 @@ $Type = "ToastReboot"
 $CustomAppValue = "Restart Notification"
 $LimitToastToRunEveryMinutesValue = 60
 
-# Check to see if user snooozed the notification
+# Check to see if user snoozed the notification
 $appId = 'Toast.Custom.App' # This should match whichever AppId you're using to create the toasts
 
 $Load = [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
@@ -258,7 +258,37 @@ $toastNotifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToas
 $scheduled = $toastNotifier.getScheduledToastNotifications()
 
 if ($scheduled.DeliveryTime) {
-    Write-Log "User has snoozed notifications, next notification delivery is '$($scheduled.DeliveryTime)'.  Stopping."
+    Write-Log -Message "User has snoozed notifications, next notification delivery is '$($scheduled.DeliveryTime)'.  Stopping."
+    # Original date and time string
+    $originalDateTime = $scheduled.DeliveryTime
+    # Convert to DateTime object
+    $dateTime = [DateTimeOffset]::Parse($originalDateTime)
+    # Convert to the desired format
+    $convertedDateTime = $dateTime.ToString("yyyy-MM-ddTHH:mm:ss", [System.Globalization.CultureInfo]::InvariantCulture)
+
+    # Output the result to the registry
+    if (-NOT(Get-ItemProperty -Path $global:RegistryPath -Name LastRunTime -ErrorAction Ignore)) {
+        New-ItemProperty -Path $global:RegistryPath -Name LastRunTime -Value $convertedDateTime -Force | Out-Null
+    }
+    else {
+        Set-ItemProperty -Path $global:RegistryPath -Name LastRunTime -Value $convertedDateTime -Force | Out-Null
+    }
+
+    # Limit number of snoozes to 1
+    if (-NOT(Get-ItemProperty -Path $global:RegistryPath -Name Snoozed -ErrorAction Ignore)) {
+        New-ItemProperty -Path $global:RegistryPath -Name Snoozed -Value 1 -Force | Out-Null
+    }
+    else {
+        Set-ItemProperty -Path $global:RegistryPath -Name Snoozed -Value 1 -Force | Out-Null
+    }
+
+    $SnoozeTask = Get-ScheduledTask -ErrorAction SilentlyContinue | Where-Object TaskName -like 'Clear Snoozed Toasts*'
+    if ($SnoozeTask) {
+        $SnoozeTask | Start-ScheduledTask
+    }
+    else {
+        Write-Log -Level Error "Scheduled task for clearing snoozed toasts not found!"
+    }
     break
 }
 
@@ -312,8 +342,15 @@ catch {
 }
 
 #Fetching images from uri
-Invoke-WebRequest -Uri $LogoImageUri -OutFile $LogoImage
-Invoke-WebRequest -Uri $HeroImageUri -OutFile $HeroImage
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls
+try {
+    Invoke-WebRequest -Uri $LogoImageUri -OutFile $LogoImage -ErrorAction Stop
+    Invoke-WebRequest -Uri $HeroImageUri -OutFile $HeroImage -ErrorAction Stop
+}
+catch {
+    Write-Log -Level Warn "Invoke-WebRequest error: $($_.Exception.Message)"
+}
+
 
 # Testing for blockers of toast notifications in Windows
 $WindowsPushNotificationsEnabled = Test-WindowsPushNotificationsEnabled
@@ -422,6 +459,40 @@ if ((Get-ItemProperty -Path "$RegPath\$AppPWSH" -Name 'ShowInActionCenter' -Erro
 
 
 # Formatting the toast notification XML
+$snoozed = Get-ItemProperty -Path $global:RegistryPath -Name Snoozed -ErrorAction Ignore
+if ($null -ne $snoozed -or $snoozed -eq 1) {
+[xml]$Toast = @"
+<toast scenario="$Scenario">
+    <visual>
+    <binding template="ToastGeneric">
+        <image placement="hero" src="$HeroImage"/>
+        <image id="1" placement="appLogoOverride" hint-crop="circle" src="$LogoImage"/>
+        <text placement="attribution">$AttributionText</text>
+        <text>$HeaderText</text>
+        <group>
+            <subgroup>
+                <text hint-style="title" hint-wrap="true" >$TitleText</text>
+            </subgroup>
+        </group>
+        <group>
+            <subgroup>     
+                <text hint-style="body" hint-wrap="true" >$BodyText1</text>
+            </subgroup>
+        </group>
+        <group>
+            <subgroup>     
+                <text hint-style="body" hint-wrap="true" >$BodyText2</text>
+            </subgroup>
+        </group>
+    </binding>
+    </visual>
+    <actions>
+        <action activationType="protocol" arguments="$Action1" content="Restart" />
+    </actions>
+</toast>
+"@
+}
+else {
 [xml]$Toast = @"
 <toast scenario="$Scenario">
     <visual>
@@ -449,7 +520,6 @@ if ((Get-ItemProperty -Path "$RegPath\$AppPWSH" -Name 'ShowInActionCenter' -Erro
     </visual>
     <actions>
         <input id="snoozeTime" type="selection" title="Click snooze to be reminded again in:" defaultInput="240">
-            <selection id="1" content="1 minute"/>
             <selection id="240" content="4 Hours"/>
             <selection id="360" content="6 Hours"/>
             <selection id="480" content="8 Hours"/>
@@ -460,6 +530,7 @@ if ((Get-ItemProperty -Path "$RegPath\$AppPWSH" -Name 'ShowInActionCenter' -Erro
     </actions>
 </toast>
 "@
+}
 
 # This option is able to prevent multiple toast notification from being displayed in a row
 $LastRunTimeOutput = Get-NotificationLastRunTime
