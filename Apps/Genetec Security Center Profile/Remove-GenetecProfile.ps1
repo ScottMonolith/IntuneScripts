@@ -1,0 +1,1 @@
+Remove-Item -Path "$($env:localappdata)\Genetec Security Center 5.12" -Force -Recurse
