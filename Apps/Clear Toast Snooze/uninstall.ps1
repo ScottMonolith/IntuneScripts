@@ -1,1 +1,1 @@
-Unregister-ScheduledTask -TaskName "Clear Snoozed Toasts" -Confirm:$false
+Unregister-ScheduledTask -TaskName "Clear Snoozed Toasts v1.0" -Confirm:$false
