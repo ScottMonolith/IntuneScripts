@@ -1,0 +1,1 @@
+Get-AppxPackage -AllUsers -Name Microsoft.Edge.GameAssist | Remove-AppxPackage
