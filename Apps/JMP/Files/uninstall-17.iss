@@ -1,0 +1,15 @@
+[InstallShield Silent]
+Version=v7.00
+File=Response File
+[File Transfer]
+OverwrittenReadOnly=NoToAll
+[{6667B9B6-645D-4155-BBFD-60C4DDF926F9}-DlgOrder]
+Dlg0={6667B9B6-645D-4155-BBFD-60C4DDF926F9}-MessageBox-0
+Count=2
+Dlg1={6667B9B6-645D-4155-BBFD-60C4DDF926F9}-SdFinish-0
+[{6667B9B6-645D-4155-BBFD-60C4DDF926F9}-MessageBox-0]
+Result=6
+[{6667B9B6-645D-4155-BBFD-60C4DDF926F9}-SdFinish-0]
+Result=1
+bOpt1=0
+bOpt2=0
